@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   try {
     const response = await fetch(
-      'https://shanika2001.app.n8n.cloud/webhook/98d25a9d-5763-4419-91bd-ee1d2675c924',
+      'https://shanika2001.app.n8n.cloud/webhook/a656cdd0-a353-441b-9024-5ec364a63a71/chat',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
