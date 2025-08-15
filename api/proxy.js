@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   // For security and flexibility, it's best to store this URL as an environment variable.
   const n8nWebhookUrl =
     process.env.N8N_WEBHOOK_URL ||
-    'https://shanika2001.app.n8n.cloud/webhook/c28a212a-aadd-459d-9fa2-359b473ae457';
+    'https://shanika2001.app.n8n.cloud/webhook/shanika2001';
 
   const forwardHeaders = { 'Content-Type': 'application/json' };
   // Forward the Authorization header from the client if it exists
