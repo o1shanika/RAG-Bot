@@ -182,7 +182,7 @@ async function sendMsg() {
     const res = await fetch(webhookURL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text })
+      body: JSON.stringify({ chatInput: text })
     });
 
     if (!res.ok) throw new Error(`Server responded with status: ${res.status}`);
@@ -193,10 +193,14 @@ async function sendMsg() {
 
     try {
       const data = JSON.parse(responseText); // Manually parse the JSON
-      addMessage(data.reply || "Sorry, the response was empty.", 'bot');
+      if (data.reply) {
+        addMessage(data.reply, 'bot');
+      } else {
+        throw new Error(`Response missing 'reply' key. Got: ${responseText.substring(0, 100)}...`);
+      }
     } catch (jsonError) {
       // This catches errors if the proxy returned something other than valid JSON (e.g., an HTML error page)
-      throw new Error(`Failed to parse JSON. Proxy returned: ${responseText.substring(0, 100)}...`);
+      throw new Error(`Failed to parse JSON. Proxy returned: ${responseText.substring(0, 150)}...`);
     }
   } catch(err) {
     console.error("sendMsg Error:", err); // Log the full error to the console for more details
@@ -212,4 +216,3 @@ async function sendMsg() {
 
 </body>
 </html>
-
