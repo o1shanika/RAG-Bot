@@ -178,16 +178,22 @@ async function sendMsg() {
       throw new Error(`Server error (${res.status}): ${errorText || 'No response body'}`);
     }
 
-    const data = await res.json();
+    const responseText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Failed to parse server response as JSON. Received: ${responseText.substring(0, 100)}...`);
+    }
 
     // Check for a successful reply, otherwise check for a known n8n error message
-    if (data.reply) {
-      addMessage(data.reply, 'bot');
+    if (data.output) {
+      addMessage(data.output, 'bot');
       return;
     }
 
     // If no reply, construct a detailed error from the n8n response object
-    const errorMessage = data.errorMessage || data.message || "Response from server is missing a 'reply'.";
+    const errorMessage = data.errorMessage || data.message || "Response from server is missing an 'output'.";
     const errorDescription = data.errorDescription ? `\nDetails: ${data.errorDescription.substring(0, 150)}...` : '';
     throw new Error(errorMessage + errorDescription);
   } catch (err) {
