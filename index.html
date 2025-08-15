@@ -131,8 +131,22 @@
 </div>
 
 <script>
-// TEMP: for testing; replace with your proxy endpoint if using serverless
-const webhookURL = "/api/proxy"; // or your n8n webhook if CORS allowed
+// --- IMPORTANT ---
+// 1. Replace this URL with your actual n8n webhook URL.
+// 2. Because you are running this from a local file, you will likely encounter a CORS error.
+//    For testing purposes, you can prefix your URL with a CORS proxy, like this:
+//    const webhookURL = "https://cors-proxy.io/?" + "https://your-n8n-url.n8n.cloud/webhook/your-path";
+const webhookURL = "https://shanika2001.app.n8n.cloud/webhook/98d25a9d-5763-4419-91bd-ee1d2675c924";
+
+const chatInput = document.getElementById('input');
+
+// Send message when the 'Enter' key is pressed
+chatInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Prevents adding a new line
+    sendMsg();
+  }
+});
 
 function addMessage(text, sender = 'bot') {
   const chat = document.getElementById('chat');
@@ -154,14 +168,15 @@ function addMessage(text, sender = 'bot') {
 }
 
 async function sendMsg() {
-  const input = document.getElementById('input');
-  const text = input.value.trim();
+  const text = chatInput.value.trim();
   if (!text) return;
 
   addMessage(text, 'user');
-  input.value = '';
+  chatInput.value = '';
+  chatInput.focus();
 
   addMessage("Typing...", 'bot');
+  const typingIndicator = chat.querySelector('.bot:last-child');
 
   try {
     const res = await fetch(webhookURL, {
@@ -170,19 +185,17 @@ async function sendMsg() {
       body: JSON.stringify({ message: text })
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Server responded with status: ${res.status}`);
 
     const data = await res.json();
-    document.querySelectorAll('.bot span').forEach(el => {
-      if (el.textContent === "Typing...") el.parentElement.remove();
-    });
-
-    addMessage(data.reply || "no reply", 'bot');
+    addMessage(data.reply || "Sorry, the response was empty.", 'bot');
   } catch(err) {
-    document.querySelectorAll('.bot span').forEach(el => {
-      if (el.textContent === "Typing...") el.parentElement.remove();
-    });
     addMessage("Error: " + err.message, 'bot');
+  } finally {
+    // This will always run, whether the request succeeded or failed
+    if (typingIndicator && typingIndicator.querySelector('span').textContent === "Typing...") {
+      typingIndicator.remove();
+    }
   }
 }
 </script>
