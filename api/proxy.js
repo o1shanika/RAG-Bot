@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     console.log("Request body:", req.body);
 
     const response = await fetch(
-      'https://shanika2001.app.n8n.cloud/webhook/98d25a9d-5763-4419-91bd-ee1d2675c924',
+      'https://shanika2001.app.n8n.cloud/webhook/c28a212a-aadd-459d-9fa2-359b473ae457',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
