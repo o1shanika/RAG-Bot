@@ -8,14 +8,13 @@
   body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background-color: #e8f5e9; /* light green background */
+    background-color: #e8f5e9;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     color: #1b5e20;
   }
-
   #chat-container {
     width: 400px;
     max-width: 90%;
@@ -27,16 +26,14 @@
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   }
-
   header {
     padding: 15px;
     text-align: center;
-    background-color: #a5d6a7; /* light green header */
+    background-color: #a5d6a7;
     font-size: 18px;
     font-weight: bold;
     color: #1b5e20;
   }
-
   #chat {
     flex: 1;
     padding: 15px;
@@ -46,7 +43,6 @@
     gap: 12px;
     background-color: #f1f8f1;
   }
-
   .msg {
     max-width: 70%;
     padding: 12px 16px;
@@ -55,14 +51,12 @@
     display: inline-block;
     word-wrap: break-word;
   }
-
   .user {
     align-self: flex-end;
     background-color: #c8e6c9;
     color: #1b5e20;
     border-bottom-right-radius: 6px;
   }
-
   .bot {
     align-self: flex-start;
     background-color: #e8f5e9;
@@ -72,19 +66,16 @@
     align-items: center;
     gap: 8px;
   }
-
   .bot img {
     width: 24px;
     height: 24px;
     border-radius: 50%;
   }
-
   #input-area {
     display: flex;
     padding: 10px;
     background-color: #dcedc8;
   }
-
   #input {
     flex: 1;
     padding: 10px;
@@ -95,7 +86,6 @@
     color: #1b5e20;
     margin-right: 10px;
   }
-
   button {
     background-color: #81c784;
     border: none;
@@ -106,11 +96,9 @@
     color: white;
     font-weight: bold;
   }
-
   button:hover {
     transform: scale(1.05);
   }
-
   @keyframes fadeSlide {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -121,9 +109,7 @@
 
 <div id="chat-container">
   <header>💬 Modern RAG Bot</header>
-
   <div id="chat"></div>
-
   <div id="input-area">
     <input id="input" type="text" placeholder="Type your message..." />
     <button onclick="sendMsg()">Send</button>
@@ -131,25 +117,18 @@
 </div>
 
 <script>
-// --- IMPORTANT ---
-// 1. Replace this URL with your actual n8n webhook URL.
-// 2. Because you are running this from a local file, you will likely encounter a CORS error.
-//    For testing purposes, you can prefix your URL with a CORS proxy, like this:
-//    const webhookURL = "https://cors-proxy.io/?" + "https://your-n8n-url.n8n.cloud/webhook/your-path";
 const webhookURL = "https://shanika2001.app.n8n.cloud/webhook/c28a212a-aadd-459d-9fa2-359b473ae457";
-
+const chatEl = document.getElementById('chat');
 const chatInput = document.getElementById('input');
 
-// Send message when the 'Enter' key is pressed
 chatInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
-    event.preventDefault(); // Prevents adding a new line
+    event.preventDefault();
     sendMsg();
   }
 });
 
 function addMessage(text, sender = 'bot') {
-  const chat = document.getElementById('chat');
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('msg', sender);
 
@@ -163,8 +142,8 @@ function addMessage(text, sender = 'bot') {
   span.textContent = text;
   msgDiv.appendChild(span);
 
-  chat.appendChild(msgDiv);
-  chat.scrollTop = chat.scrollHeight;
+  chatEl.appendChild(msgDiv);
+  chatEl.scrollTop = chatEl.scrollHeight;
 }
 
 async function sendMsg() {
@@ -176,40 +155,31 @@ async function sendMsg() {
   chatInput.focus();
 
   addMessage("Typing...", 'bot');
-  const typingIndicator = chat.querySelector('.bot:last-child');
+  const typingIndicator = chatEl.querySelector('.bot:last-child');
 
   try {
     const res = await fetch(webhookURL, {
-      method: 'POST',
+      method: 'POST', // ✅ Ensure POST
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chatInput: text })
     });
 
     if (!res.ok) throw new Error(`Server responded with status: ${res.status}`);
 
-    // Read the response as text first to handle non-JSON error messages from the proxy
     const responseText = await res.text();
-    console.log("Raw response from proxy:", responseText); // Log for debugging
+    console.log("Raw response:", responseText);
 
-    try {
-      const data = JSON.parse(responseText); // Manually parse the JSON
-      if (data.reply) {
-        addMessage(data.reply, 'bot');
-      } else {
-        throw new Error(`Response missing 'reply' key. Got: ${responseText.substring(0, 100)}...`);
-      }
-    } catch (jsonError) {
-      // This catches errors if the proxy returned something other than valid JSON (e.g., an HTML error page)
-      throw new Error(`Failed to parse JSON. Proxy returned: ${responseText.substring(0, 150)}...`);
+    const data = JSON.parse(responseText);
+    if (data.reply) {
+      if (typingIndicator) typingIndicator.remove();
+      addMessage(data.reply, 'bot');
+    } else {
+      throw new Error(`Missing 'reply' key in response.`);
     }
-  } catch(err) {
-    console.error("sendMsg Error:", err); // Log the full error to the console for more details
+  } catch (err) {
+    console.error("sendMsg Error:", err);
+    if (typingIndicator) typingIndicator.remove();
     addMessage("Error: " + err.message, 'bot');
-  } finally {
-    // This will always run, whether the request succeeded or failed
-    if (typingIndicator && typingIndicator.querySelector('span').textContent === "Typing...") {
-      typingIndicator.remove();
-    }
   }
 }
 </script>
