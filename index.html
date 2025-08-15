@@ -170,19 +170,16 @@ async function sendMsg() {
       body: JSON.stringify({ message: text })
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
 
     const data = await res.json();
-    document.querySelectorAll('.bot span').forEach(el => {
-      if (el.textContent === "Typing...") el.parentElement.remove();
-    });
-
-    addMessage(data.reply || "No reply", 'bot');
+    addMessage(data.reply || "Sorry, I received an empty response.", 'bot');
   } catch(err) {
+    addMessage("Error: " + err.message, 'bot');
+  } finally {
     document.querySelectorAll('.bot span').forEach(el => {
       if (el.textContent === "Typing...") el.parentElement.remove();
     });
-    addMessage("Error: " + err.message, 'bot');
   }
 }
 </script>
