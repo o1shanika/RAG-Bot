@@ -171,20 +171,30 @@ async function sendMsg() {
       body: JSON.stringify({ chatInput: text })
     });
 
-    if (!res.ok) throw new Error(`Server responded with status: ${res.status}`);
+    if (!res.ok) {
+      // If the server response is not OK, read the body as text for more details.
+      const errorText = await res.text();
+      // The error from n8n for auth failure is often "Authorization required!"
+      throw new Error(`Server error (${res.status}): ${errorText || 'No response body'}`);
+    }
 
     const data = await res.json();
-    if (typingIndicator) typingIndicator.remove();
 
+    // Check for a successful reply, otherwise check for a known n8n error message
     if (data.reply) {
       addMessage(data.reply, 'bot');
-    } else {
-      addMessage("⚠ No reply from server.", 'bot');
+      return;
     }
+
+    // If no reply, construct a detailed error from the n8n response object
+    const errorMessage = data.errorMessage || data.message || "Response from server is missing a 'reply'.";
+    const errorDescription = data.errorDescription ? `\nDetails: ${data.errorDescription.substring(0, 150)}...` : '';
+    throw new Error(errorMessage + errorDescription);
   } catch (err) {
     console.error("sendMsg Error:", err);
+    addMessage(err.message, 'bot');
+  } finally {
     if (typingIndicator) typingIndicator.remove();
-    addMessage("Error: " + err.message, 'bot');
   }
 }
 </script>
