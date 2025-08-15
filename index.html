@@ -117,7 +117,7 @@
 </div>
 
 <script>
-const webhookURL = "api/proxy";
+const webhookURL = "/api/proxy"; // calls Vercel API route
 const chatEl = document.getElementById('chat');
 const chatInput = document.getElementById('input');
 
@@ -159,22 +159,20 @@ async function sendMsg() {
 
   try {
     const res = await fetch(webhookURL, {
-      method: 'POST', // ✅ Ensure POST
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chatInput: text })
     });
 
     if (!res.ok) throw new Error(`Server responded with status: ${res.status}`);
 
-    const responseText = await res.text();
-    console.log("Raw response:", responseText);
+    const data = await res.json();
+    if (typingIndicator) typingIndicator.remove();
 
-    const data = JSON.parse(responseText);
     if (data.reply) {
-      if (typingIndicator) typingIndicator.remove();
       addMessage(data.reply, 'bot');
     } else {
-      throw new Error(`Missing 'reply' key in response.`);
+      addMessage("⚠ No reply from server.", 'bot');
     }
   } catch (err) {
     console.error("sendMsg Error:", err);
@@ -186,3 +184,4 @@ async function sendMsg() {
 
 </body>
 </html>
+
