@@ -121,6 +121,10 @@ const webhookURL = "/api/proxy"; // calls Vercel API route
 const chatEl = document.getElementById('chat');
 const chatInput = document.getElementById('input');
 
+// --- Basic Auth Credentials ---
+const username = 'shanika';
+const password = 'shanika@123';
+
 chatInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     event.preventDefault();
@@ -160,7 +164,10 @@ async function sendMsg() {
   try {
     const res = await fetch(webhookURL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+      },
       body: JSON.stringify({ chatInput: text })
     });
 
@@ -184,4 +191,3 @@ async function sendMsg() {
 
 </body>
 </html>
-
