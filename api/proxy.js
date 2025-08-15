@@ -1,11 +1,9 @@
 export default async function handler(req, res) {
-  // For security and flexibility, it's best to store this URL as an environment variable.
   const n8nWebhookUrl =
     process.env.N8N_WEBHOOK_URL ||
     'https://shanika2001.app.n8n.cloud/webhook/shanika2001';
 
   const forwardHeaders = { 'Content-Type': 'application/json' };
-  // Forward the Authorization header from the client if it exists
   if (req.headers.authorization) {
     forwardHeaders['Authorization'] = req.headers.authorization;
   }
@@ -17,15 +15,24 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body),
     });
 
-    // Read the response as text to handle any content type (JSON, text, HTML error)
-    const data = await n8nRes.text();
-    console.log("Raw response from n8n:", data);
+    let rawData = await n8nRes.text();
+    console.log("Raw response from n8n:", rawData);
 
+    let finalOutput = rawData;
 
-    // Forward the original Content-Type header and status code from n8n
-    res.setHeader('Content-Type', n8nRes.headers.get('content-type') || 'application/json');
-    res.status(n8nRes.status).send(data);
+    // Try to parse as JSON and extract `output` if available
+    try {
+      const parsed = JSON.parse(rawData);
+      if (parsed && typeof parsed.output === 'string') {
+        finalOutput = parsed.output;
+      }
+    } catch {
+      // Not JSON, just keep raw text
+    }
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.status(n8nRes.status).send(finalOutput);
   } catch (err) {
-    res.status(500).json({ error: `Proxy error: ${err.message}` });
+    res.status(500).send(`Proxy error: ${err.message}`);
   }
 }
