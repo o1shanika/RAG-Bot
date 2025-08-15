@@ -4,10 +4,16 @@ export default async function handler(req, res) {
     process.env.N8N_WEBHOOK_URL ||
     'https://shanika2001.app.n8n.cloud/webhook/c28a212a-aadd-459d-9fa2-359b473ae457';
 
+  const forwardHeaders = { 'Content-Type': 'application/json' };
+  // Forward the Authorization header from the client if it exists
+  if (req.headers.authorization) {
+    forwardHeaders['Authorization'] = req.headers.authorization;
+  }
+
   try {
     const n8nRes = await fetch(n8nWebhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: forwardHeaders,
       body: JSON.stringify(req.body),
     });
 
