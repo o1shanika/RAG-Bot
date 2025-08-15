@@ -136,7 +136,7 @@
 // 2. Because you are running this from a local file, you will likely encounter a CORS error.
 //    For testing purposes, you can prefix your URL with a CORS proxy, like this:
 //    const webhookURL = "https://cors-proxy.io/?" + "https://your-n8n-url.n8n.cloud/webhook/your-path";
-const webhookURL = "https://shanika2001.app.n8n.cloud/webhook/98d25a9d-5763-4419-91bd-ee1d2675c924";
+const webhookURL = "/api/proxy";
 
 const chatInput = document.getElementById('input');
 
@@ -187,9 +187,19 @@ async function sendMsg() {
 
     if (!res.ok) throw new Error(`Server responded with status: ${res.status}`);
 
-    const data = await res.json();
-    addMessage(data.reply || "Sorry, the response was empty.", 'bot');
+    // Read the response as text first to handle non-JSON error messages from the proxy
+    const responseText = await res.text();
+    console.log("Raw response from proxy:", responseText); // Log for debugging
+
+    try {
+      const data = JSON.parse(responseText); // Manually parse the JSON
+      addMessage(data.reply || "Sorry, the response was empty.", 'bot');
+    } catch (jsonError) {
+      // This catches errors if the proxy returned something other than valid JSON (e.g., an HTML error page)
+      throw new Error(`Failed to parse JSON. Proxy returned: ${responseText.substring(0, 100)}...`);
+    }
   } catch(err) {
+    console.error("sendMsg Error:", err); // Log the full error to the console for more details
     addMessage("Error: " + err.message, 'bot');
   } finally {
     // This will always run, whether the request succeeded or failed
@@ -202,3 +212,4 @@ async function sendMsg() {
 
 </body>
 </html>
+
