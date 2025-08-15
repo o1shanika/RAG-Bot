@@ -173,6 +173,7 @@ async function sendMsg() {
     if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
 
     const data = await res.json();
+    console.log('Received from server:', data); // Add this line for debugging
     addMessage(data.reply || "Sorry, I received an empty response.", 'bot');
   } catch(err) {
     addMessage("Error: " + err.message, 'bot');
