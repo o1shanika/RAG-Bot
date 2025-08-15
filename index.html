@@ -6,43 +6,186 @@
 <title>Modern RAG Bot</title>
 <style>
   body {
-    /* The widget will inject its own styles and positioning. */
-    /* You can set a background color for the page here if you like. */
-    background-color: #f0f0f0;
-    font-family: sans-serif;
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #e8f5e9; /* light green background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #1b5e20;
+  }
+
+  #chat-container {
+    width: 400px;
+    max-width: 90%;
+    background-color: #ffffff;
+    border-radius: 20px;
+    border: 2px solid #a5d6a7;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  header {
+    padding: 15px;
+    text-align: center;
+    background-color: #a5d6a7; /* light green header */
+    font-size: 18px;
+    font-weight: bold;
+    color: #1b5e20;
+  }
+
+  #chat {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #f1f8f1;
+  }
+
+  .msg {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    animation: fadeSlide 0.3s ease;
+    display: inline-block;
+    word-wrap: break-word;
+  }
+
+  .user {
+    align-self: flex-end;
+    background-color: #c8e6c9;
+    color: #1b5e20;
+    border-bottom-right-radius: 6px;
+  }
+
+  .bot {
+    align-self: flex-start;
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    border-bottom-left-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bot img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+  }
+
+  #input-area {
+    display: flex;
+    padding: 10px;
+    background-color: #dcedc8;
+  }
+
+  #input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #a5d6a7;
+    outline: none;
+    background-color: #f1f8f1;
+    color: #1b5e20;
+    margin-right: 10px;
+  }
+
+  button {
+    background-color: #81c784;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+    color: white;
+    font-weight: bold;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
 </head>
 <body>
 
-<!-- The old chat container and script are removed. -->
-<!-- The new widget code is added below. -->
+<div id="chat-container">
+  <header>💬 Modern RAG Bot</header>
 
-<!-- Widget Configuration -->
+  <div id="chat"></div>
+
+  <div id="input-area">
+    <input id="input" type="text" placeholder="Type your message..." />
+    <button onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
 <script>
-    window.ChatWidgetConfig = {
-        webhook: {
-            // IMPORTANT: Replace this with your actual n8n webhook URL
-            url: 'https://shanika2001.app.n8n.cloud/webhook/98d25a9d-5763-4419-91bd-ee1d2675c924/chat',
-            route: 'general'
-        },
-        branding: {
-            logo: 'https://i.ibb.co/tQn8fZk/bot-icon.png', // Using your previous bot icon
-            name: 'Modern RAG Bot', // Your bot's name
-            welcomeText: 'Hi 👋, how can I help you today?', //Welcome message
-            responseTimeText: 'I typically respond right away' //Response time message
-        },
-        style: {
-            primaryColor: '#81c784', // A green color from your previous design
-            secondaryColor: '#a5d6a7', // A lighter green from your previous design
-            position: 'right', //Position of the widget (left or right)
-            backgroundColor: '#ffffff', //Background color of the chat widget
-            fontColor: '#1b5e20' // Text color from your previous design
-        }
-    };
+// TEMP: for testing; replace with your proxy endpoint if using serverless
+const webhookURL = "/api/proxy"; // or your n8n webhook if CORS allowed
+
+function addMessage(text, sender = 'bot') {
+  const chat = document.getElementById('chat');
+  const msgDiv = document.createElement('div');
+  msgDiv.classList.add('msg', sender);
+
+  if (sender === 'bot') {
+    const icon = document.createElement('img');
+    icon.src = 'https://i.ibb.co/tQn8fZk/bot-icon.png';
+    msgDiv.appendChild(icon);
+  }
+
+  const span = document.createElement('span');
+  span.textContent = text;
+  msgDiv.appendChild(span);
+
+  chat.appendChild(msgDiv);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendMsg() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, 'user');
+  input.value = '';
+
+  addMessage("Typing...", 'bot');
+
+  try {
+    const res = await fetch(webhookURL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    document.querySelectorAll('.bot span').forEach(el => {
+      if (el.textContent === "Typing...") el.parentElement.remove();
+    });
+
+    addMessage(data.reply || "no reply", 'bot');
+  } catch(err) {
+    document.querySelectorAll('.bot span').forEach(el => {
+      if (el.textContent === "Typing...") el.parentElement.remove();
+    });
+    addMessage("Error: " + err.message, 'bot');
+  }
+}
 </script>
-<!-- Widget Script -->
-<script src="https://cdn.jsdelivr.net/gh/WayneSimpson/n8n-chatbot-template@main/chat-widget.js" defer></script>
 
 </body>
 </html>
